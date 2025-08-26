@@ -1,0 +1,56 @@
+HELP.md
+
+### 빌드 산출물 ###
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### 로그 파일 ###
+*.log
+
+### 로컬 환경 설정  ###
+application-local.properties
+application-dev.properties
+application-test.properties
+application-local.yml
+application-dev.yml
+application-test.yml
+
+### OS 자동 생성 파일 ###
+.DS_Store
+Thumbs.db
+
+
+# 실제 DB 계정
+spring.datasource.username=hs
+spring.datasource.password=123456
+
