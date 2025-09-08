@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tech.hs.dao.AirDao">
+
+    <!-- 단건 INSERT -->
+    <insert id="insertAir" parameterType="com.tech.hs.dto.AirDto">
+        INSERT INTO air_quality
+        (station_name, data_time, pm10_value, pm25_value, khai_value)
+        VALUES
+        (#{dto.stationName}, #{dto.dataTime}, #{dto.pm10Value}, #{dto.pm25Value}, #{dto.khaiValue})
+        ON DUPLICATE KEY UPDATE
+            pm10_value = VALUES(pm10_value),
+            pm25_value = VALUES(pm25_value),
+            khai_value = VALUES(khai_value)
+    </insert>
+
+    <!-- 배치 INSERT + UPSERT -->
+    <insert id="insertManyAir" parameterType="java.util.List">
+        INSERT INTO air_quality
+        (station_name, data_time, pm10_value, pm25_value, khai_value)
+        VALUES
+        <foreach collection="list" item="it" separator=",">
+            (#{it.stationName}, #{it.dataTime}, #{it.pm10Value}, #{it.pm25Value}, #{it.khaiValue})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            pm10_value = VALUES(pm10_value),
+            pm25_value = VALUES(pm25_value),
+            khai_value = VALUES(khai_value)
+    </insert>
+
+</mapper>
