@@ -4,30 +4,60 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.tech.hs.dao.AirDao">
 
-    <!-- 단건 INSERT -->
-    <insert id="insertAir" parameterType="com.tech.hs.dto.AirDto">
-        INSERT INTO air_quality
-        (station_name, data_time, pm10_value, pm25_value, khai_value)
-        VALUES
-        (#{dto.stationName}, #{dto.dataTime}, #{dto.pm10Value}, #{dto.pm25Value}, #{dto.khaiValue})
-        ON DUPLICATE KEY UPDATE
-            pm10_value = VALUES(pm10_value),
-            pm25_value = VALUES(pm25_value),
-            khai_value = VALUES(khai_value)
-    </insert>
+	<!-- 단건 INSERT -->
+	<insert id="insertAirQualityBatch"
+		parameterType="java.util.List">
+		INSERT INTO air_quality (
+		sido_name, station_name, data_time,
+		pm10_value, pm25_value, khai_value
+		) VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.sidoName}, #{item.stationName}, #{item.dataTime},
+			#{item.pm10Value}, #{item.pm25Value}, #{item.khaiValue})
+		</foreach>
+	</insert>
 
-    <!-- 배치 INSERT + UPSERT -->
-    <insert id="insertManyAir" parameterType="java.util.List">
-        INSERT INTO air_quality
-        (station_name, data_time, pm10_value, pm25_value, khai_value)
-        VALUES
-        <foreach collection="list" item="it" separator=",">
-            (#{it.stationName}, #{it.dataTime}, #{it.pm10Value}, #{it.pm25Value}, #{it.khaiValue})
-        </foreach>
-        ON DUPLICATE KEY UPDATE
-            pm10_value = VALUES(pm10_value),
-            pm25_value = VALUES(pm25_value),
-            khai_value = VALUES(khai_value)
-    </insert>
+	<select id="selectPm10" parameterType="string"
+		resultType="com.tech.hs.dto.Airpm10AvgDto">
+		SELECT
+		data_time AS dataTime,
+		ROUND(AVG(CAST(pm10_value AS DECIMAL(10,1))), 1) AS pm10Avg
+		FROM air_quality
+		WHERE pm10_value REGEXP '^[0-9]+$'
+		AND data_time LIKE CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), '%')
+		AND sido_name = #{sido}
+		GROUP BY data_time
+		ORDER BY data_time
+	</select>
+
+
+
+	<!-- 중복 방지 -->
+	<insert id="upsertAirQualityBatch">
+		INSERT INTO air_quality (
+		sido_name,
+		station_name,
+		data_time,
+		pm10_value,
+		pm25_value,
+		khai_value
+		) VALUES
+		<foreach collection="list" item="it" separator=",">
+			(
+			#{it.sidoName},
+			#{it.stationName},
+			#{it.dataTime},
+			#{it.pm10Value},
+			#{it.pm25Value},
+			#{it.khaiValue}
+			)
+		</foreach>
+		ON DUPLICATE KEY UPDATE
+		pm10_value = VALUES(pm10_value),
+		pm25_value =
+		VALUES(pm25_value),
+		khai_value = VALUES(khai_value)
+	</insert>
+
 
 </mapper>

@@ -1,6 +1,6 @@
 package com.tech.hs.util;
 
-public class PageVo {
+public class PageVO {
 	private Integer displayRowCount = 5; // 출력할 데이터 갯수
 	private Integer rowStart; // 시작행 번호
 	private Integer rowEnd; // 종료행 번호

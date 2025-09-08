@@ -1,64 +1,69 @@
-// src/main/java/com/tech/hs/controller/AirController.java
 package com.tech.hs.controller;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.tech.hs.dao.AirDao;
 import com.tech.hs.dto.Airpm10AvgDto;
 import com.tech.hs.service.AirService;
 
-import lombok.RequiredArgsConstructor;
-
-@RestController
-@RequiredArgsConstructor
+@Controller
 @RequestMapping("/hs/service")
 public class AirController {
+
+	private static final Logger log = LoggerFactory.getLogger(AirController.class);
 
 	private final AirService airService;
 	private final AirDao airDao;
 
-	// 스케줄러가 주기적으로 실행하는 메소드
-	@Scheduled(fixedRate = 3600000) // 1시간 마다 실행
-	public void scheduledTask() {
-		String[] sidos = { "서울", "경기", "부산", "대전" };
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-		try {
-
-			for (String sido : sidos) {
-				airService.fetchAndSaveAirQuality(sido);
-				System.out.println(sido + " 데이터 저장 성공.  " + System.currentTimeMillis());
-				String now = LocalDateTime.now().format(formatter);
-				System.out.println(sido + " 데이터 저장 성공. " + now);
-				try {
-					Thread.sleep(200);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		} catch (Exception e) {
-			System.out.println("저장중 에러발생");
-		}
-
+	public AirController(AirService airService, AirDao airDao) {
+		this.airService = airService;
+		this.airDao = airDao;
 	}
-	
-	@GetMapping("/trendchart")
-    public String trendChart(Model model) {
-    	List<Airpm10AvgDto> pm10List = airDao.selectPm10("경기");
-        System.out.println("==== pm10TrendList 확인 ====");
-        for (Airpm10AvgDto dto : pm10List) {
-            System.out.println(dto);
-        }
-        model.addAttribute("pm10TrendList", pm10List);
-        return "pm10";
-    }
 
+	@GetMapping("/fetch-now")
+	public String fetchNow() throws Exception {
+		for (String sido : List.of("서울", "경기", "부산", "대전")) {
+			airService.fetchAndSaveAirQuality(sido);
+		}
+		return "ok";
+	}
+
+	// 매시 정각 실행
+	@Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
+	public void scheduledTaskHourly() {
+		String[] sidos = { "서울", "경기", "부산", "대전" };
+
+		for (String sido : sidos) {
+			try {
+				airService.fetchAndSaveAirQuality(sido);
+				log.info("{} 데이터 저장 성공 at {}", sido, LocalDateTime.now());
+			} catch (Exception ex) {
+				log.error("저장 실패: {}", sido, ex);
+			}
+
+			// API 과부하 방지
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt(); // 인터럽트 상태 복원
+				log.warn("스케줄러 sleep 중단됨", e);
+			}
+		}
+	}
+
+	@GetMapping("/trendchart")
+	public String trendChart(Model model) {
+		List<Airpm10AvgDto> pm10List = airDao.selectPm10("경기");
+		model.addAttribute("pm10TrendList", pm10List);
+		return "pm10";
+	}
 }

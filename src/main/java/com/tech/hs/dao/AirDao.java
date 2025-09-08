@@ -12,6 +12,8 @@ public interface AirDao {
 	void insertAirQuality(AirDto dto);
 
 	void insertAirQualityBatch(List<AirDto> list);
-	
+
 	List<Airpm10AvgDto> selectPm10(String sido);
+
+	void upsertAirQualityBatch(List<AirDto> list);
 }
