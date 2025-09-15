@@ -63,40 +63,121 @@ h2 {
 .pm25 {
 	background: #ff6384;
 }
+
+/* 네비게이션 */
+.navbar {
+	background: #132c6f;
+}
+
+.navbar ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+}
+
+.navbar ul li {
+	position: relative;
+}
+
+.navbar ul li a {
+	display: block;
+	padding: 14px 20px;
+	color: white;
+	text-decoration: none;
+	font-weight: bold;
+	transition: background 0.3s;
+}
+
+.navbar ul li:hover>a {
+	background: #aaa;
+}
+
+.navbar ul li ul {
+	display: none;
+	position: absolute;
+	top: 100%;
+	left: 0;
+	background: #132c6f;
+	min-width: 180px;
+	border-radius: 0 0 6px 6px;
+	box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+	z-index: 1000;
+}
+
+.navbar ul li ul li a {
+	padding: 12px 16px;
+	color: white;
+	font-weight: normal;
+}
+
+.navbar ul li ul li a:hover {
+	background: #aaa;
+}
+
+.navbar ul li:hover ul {
+	display: block;
+}
+
+/* footer */
+.footer {
+	background: #132c6f;
+	color: #ddd;
+	text-align: center;
+	padding: 10px 10px;
+	font-size: 14px;
+}
+
+.footer a {
+	color: #ddd;
+	text-decoration: none;
+	margin: 0 5px;
+	transition: color 0.3s;
+}
+
+.footer a:hover {
+	color: #fff;
+}
 </style>
 </head>
 <body>
+	<h2>미세먼지 지표 선택</h2>
+	<h1></h1>
 
-	<h1>미세먼지 지표 선택</h1>
+	<div class="navbar">
+		<ul>
+			<li><a href="#">미세먼지 농도(pm10)▼</a>
+				<ul>
+					<li><a class="metric-link" data-metric="PM10" data-sido="서울"
+						href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='서울'/></c:url>">서울</a></li>
 
-	<h2>미세먼지 농도(pm10)</h2>
-	<div class="links">
-		<a class="metric-link" data-metric="PM10" data-sido="서울"
-			href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='서울'/></c:url>">서울</a>
+					<li><a class="metric-link" data-metric="PM10" data-sido="경기"
+						href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='경기'/></c:url>">경기</a></li>
 
-		<a class="metric-link" data-metric="PM10" data-sido="경기"
-			href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='경기'/></c:url>">경기</a>
+					<li><a class="metric-link" data-metric="PM10" data-sido="대전"
+						href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='대전'/></c:url>">대전</a></li>
 
-		<a class="metric-link" data-metric="PM10" data-sido="대전"
-			href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='대전'/></c:url>">대전</a>
+					<li><a class="metric-link" data-metric="PM10" data-sido="부산"
+						href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='부산'/></c:url>">부산</a></li>
+				</ul></li>
 
-		<a class="metric-link" data-metric="PM10" data-sido="부산"
-			href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='부산'/></c:url>">부산</a>
-	</div>
+			<li><a href="#">미세먼지 농도(pm25)▼</a>
+				<ul>
+					<li><a class="metric-link" data-metric="PM25" data-sido="서울"
+						href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='서울'/></c:url>">서울</a></li>
 
-	<h2>초 미세먼지 농도(PM25)</h2>
-	<div class="links">
-		<a class="metric-link" data-metric="PM25" data-sido="서울"
-			href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='서울'/></c:url>">서울</a>
+					<li><a class="metric-link" data-metric="PM25" data-sido="경기"
+						href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='경기'/></c:url>">경기</a></li>
 
-		<a class="metric-link" data-metric="PM25" data-sido="경기"
-			href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='경기'/></c:url>">경기</a>
 
-		<a class="metric-link" data-metric="PM25" data-sido="대전"
-			href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='대전'/></c:url>">대전</a>
+					<li><a class="metric-link" data-metric="PM25" data-sido="대전"
+						href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='대전'/></c:url>">대전</a></li>
 
-		<a class="metric-link" data-metric="PM25" data-sido="부산"
-			href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='부산'/></c:url>">부산</a>
+
+					<li><a class="metric-link" data-metric="PM25" data-sido="부산"
+						href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='부산'/></c:url>">부산</a></li>
+				</ul></li>
+		</ul>
 	</div>
 
 	<div id="statusBar">선택: 없음</div>

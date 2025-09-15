@@ -85,5 +85,7 @@ h2 {
             </script>
 		</c:otherwise>
 	</c:choose>
+	
+	<a href="${pageContext.request.contextPath}/hs/service/index">목록으로</a>
 </body>
 </html>

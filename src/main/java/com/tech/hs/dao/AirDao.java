@@ -22,7 +22,7 @@ public interface AirDao {
 	// pm10 시간별 평균
 	List<Pm10TrendRow> selectPm10Trend(@Param("sido") String sido,
             @Param("hours") int hours);
-	
+	// pm25 시간별 평균
 	List<Pm25TrendRow> selectPm25Trend(@Param("sido") String sido,
             @Param("hours") int hours);
 }
