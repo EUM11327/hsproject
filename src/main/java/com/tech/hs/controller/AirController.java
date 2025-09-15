@@ -7,16 +7,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.tech.hs.dao.AirDao;
-import com.tech.hs.dto.Airpm10AvgDto;
 import com.tech.hs.service.AirService;
 
 @Controller
-@RequestMapping("/hs/service")
+@RequestMapping("/hs/api")
 public class AirController {
 
 	private static final Logger log = LoggerFactory.getLogger(AirController.class);
@@ -37,8 +35,8 @@ public class AirController {
 		return "ok";
 	}
 
-	// 매시 정각 실행
-	@Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
+	// 매시 30분마다 실행
+	@Scheduled(cron = "0 30 * * * *", zone = "Asia/Seoul")
 	public void scheduledTaskHourly() {
 		String[] sidos = { "서울", "경기", "부산", "대전" };
 
@@ -58,12 +56,5 @@ public class AirController {
 				log.warn("스케줄러 sleep 중단됨", e);
 			}
 		}
-	}
-
-	@GetMapping("/trendchart")
-	public String trendChart(Model model) {
-		List<Airpm10AvgDto> pm10List = airDao.selectPm10("경기");
-		model.addAttribute("pm10TrendList", pm10List);
-		return "pm10";
 	}
 }

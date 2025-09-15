@@ -1,10 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>PM10 추이 - ${sido}</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 body {
@@ -29,79 +30,60 @@ h2 {
 </style>
 </head>
 <body>
-	<h2>서울 PM10 시간별 추이</h2>
-	<div id="chartContainer">
-		<canvas id="pm10Chart"></canvas>
-	</div>
+	<h2>PM10 평균 (${sido})</h2>
 
-	<script>
-        // JSP에서 EL로 DTO 리스트를 JS 배열로 변환
-        const labels = [
-            <c:forEach var="row" items="${pm10TrendList}" varStatus="status">
-                '${row.dataTime}'<c:if test="${!status.last}">,</c:if>
-            </c:forEach>
-        ];
+	<c:choose>
+		<c:when test="${empty pm10TrendList}">
+			<p style="text-align: center">데이터가 없습니다.</p>
+		</c:when>
+		<c:otherwise>
+			<div id="chartContainer">
+				<canvas id="pm10Chart"></canvas>
+			</div>
 
-        const dataValues = [
-            <c:forEach var="row" items="${pm10TrendList}" varStatus="status">
-                ${row.pm10Avg}<c:if test="${!status.last}">,</c:if>
-            </c:forEach>
-        ];
+			<script>
+                const labels = [
+                    <c:forEach var="row" items="${pm10TrendList}" varStatus="st">
+                        '${row.dataTime}'<c:if test="${!st.last}">,</c:if>
+                    </c:forEach>
+                ];
+                const dataValues = [
+                    <c:forEach var="row" items="${pm10TrendList}" varStatus="st">
+                        ${row.pm10Avg}<c:if test="${!st.last}">,</c:if>
+                    </c:forEach>
+                ];
 
-        const ctx = document.getElementById('pm10Chart').getContext('2d');
-
-        const pm10Chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'PM10 농도 (㎍/㎥)',
-                    data: dataValues,
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    fill: true,
-                    tension: 0.4, // 곡선 형태
-                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                    pointRadius: 5
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
+                const ctx = document.getElementById('pm10Chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'PM10 (㎍/㎥)',
+                            data: dataValues,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                            pointRadius: 4
+                        }]
                     },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
-                },
-                scales: {
-                    x: {
-                        display: true,
-                        title: {
-                            display: true,
-                            text: '시간'
-                        }
-                    },
-                    y: {
-                        display: true,
-                        title: {
-                            display: true,
-                            text: 'PM10 (㎍/㎥)'
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: true, position: 'top' },
+                            tooltip: { mode: 'index', intersect: false }
                         },
-                        beginAtZero: true
+                        interaction: { mode: 'nearest', axis: 'x', intersect: false },
+                        scales: {
+                            x: { title: { display: true, text: '시간' } },
+                            y: { title: { display: true, text: 'PM10 (㎍/㎥)' }, beginAtZero: true }
+                        }
                     }
-                }
-            }
-        });
-    </script>
-
+                });
+            </script>
+		</c:otherwise>
+	</c:choose>
 </body>
 </html>

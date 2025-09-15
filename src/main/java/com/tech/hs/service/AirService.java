@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tech.hs.dao.AirDao;
 import com.tech.hs.dto.AirDto;
+import com.tech.hs.dto.Pm10TrendRow;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,17 +38,11 @@ public class AirService {
 	@Transactional
 	public void fetchAndSaveAirQuality(String sido) throws Exception {
 
-		URI url = UriComponentsBuilder.fromHttpUrl(API_BASE)
-				.queryParam("serviceKey", SERVICE_KEY)
-				.queryParam("returnType", "json")
-				.queryParam("numOfRows", 100)
-				.queryParam("pageNo", 1)
-				.queryParam("ver", "1.0")
-				.queryParam("sidoName", sido) // 자동 인코딩
-				.build()
-				.encode(StandardCharsets.UTF_8)
-				.toUri();
-		
+		URI url = UriComponentsBuilder.fromHttpUrl(API_BASE).queryParam("serviceKey", SERVICE_KEY)
+				.queryParam("returnType", "json").queryParam("numOfRows", 100).queryParam("pageNo", 1)
+				.queryParam("ver", "1.0").queryParam("sidoName", sido) // 자동 인코딩
+				.build().encode(StandardCharsets.UTF_8).toUri();
+
 		System.out.println("[API] URL = " + url);
 
 		RestTemplate restTemplate = new RestTemplate();
@@ -88,7 +83,6 @@ public class AirService {
 			try {
 				dataTime = LocalDateTime.parse(dataTimeRaw, API_TIME).truncatedTo(ChronoUnit.HOURS); // 분/초 0으로
 			} catch (Exception e) {
-				// 포맷 이상치 스킵
 				continue;
 			}
 
@@ -112,11 +106,6 @@ public class AirService {
 			System.out.println("[DB] upsert 호출 완료 (sido=" + sido + ", size=" + batch.size() + ")");
 		} else {
 			System.err.println("[DB] 배치비어있음 (sido=" + sido + ")");
-		}
-
-		if (!batch.isEmpty()) {
-			// UPSERT로 중복 방지
-			airDao.upsertAirQualityBatch(batch);
 		}
 	}
 
@@ -146,9 +135,37 @@ public class AirService {
 		}
 	}
 
-//	@Transactional(readOnly = true)
-//	public List<Airpm10AvgDto> selectPm10Trend(String sido) {
-//		return airDao.selectPm10(sido);
-//	}
+	@Transactional(readOnly = true)
+	public List<Pm10TrendRow> fetchPm10Trend(String sido) {
+		// 최근 24시간 기준
+		int hours = 24;
+		var rows = airDao.selectPm10Trend(sido, hours);
+
+		if (rows == null || rows.isEmpty()) {
+			try {
+				fetchAndSaveAirQuality(sido);
+				rows = airDao.selectPm10Trend(sido, hours);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return rows;
+	}
+
+	@Transactional(readOnly = true)
+	public java.util.List<com.tech.hs.dto.Pm25TrendRow> fetchPm25Trend(String sido) {
+		int hours = 24;
+		var rows = airDao.selectPm25Trend(sido, hours);
+
+		if (rows == null || rows.isEmpty()) {
+			try {
+				fetchAndSaveAirQuality(sido);
+				rows = airDao.selectPm25Trend(sido, hours);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return rows;
+	}
 
 }

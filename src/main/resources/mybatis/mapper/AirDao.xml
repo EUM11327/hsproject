@@ -18,13 +18,16 @@
 	</insert>
 
 	<select id="selectPm10" parameterType="string"
-		resultType="com.tech.hs.dto.Airpm10AvgDto">
+		resultType="com.tech.hs.dto.Pm10TrendRow">
 		SELECT
 		data_time AS dataTime,
-		ROUND(AVG(CAST(pm10_value AS DECIMAL(10,1))), 1) AS pm10Avg
+		ROUND(AVG(CAST(pm10_value AS
+		DECIMAL(10,1))), 1) AS pm10Avg
 		FROM air_quality
-		WHERE pm10_value REGEXP '^[0-9]+$'
-		AND data_time LIKE CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), '%')
+		WHERE pm10_value REGEXP
+		'^[0-9]+$'
+		AND data_time LIKE CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'),
+		'%')
 		AND sido_name = #{sido}
 		GROUP BY data_time
 		ORDER BY data_time
@@ -34,23 +37,14 @@
 
 	<!-- 중복 방지 -->
 	<insert id="upsertAirQualityBatch">
-		INSERT INTO air_quality (
-		sido_name,
-		station_name,
-		data_time,
-		pm10_value,
-		pm25_value,
-		khai_value
+		INSERT INTO AIR_QUALITY (
+		sido_name, station_name, data_time,
+		pm10_value, pm25_value, khai_value
 		) VALUES
-		<foreach collection="list" item="it" separator=",">
-			(
-			#{it.sidoName},
-			#{it.stationName},
-			#{it.dataTime},
-			#{it.pm10Value},
-			#{it.pm25Value},
-			#{it.khaiValue}
-			)
+		<foreach collection="list" item="r" separator=",">
+			(#{r.sidoName},
+			#{r.stationName}, #{r.dataTime}, #{r.pm10Value}, #{r.pm25Value},
+			#{r.khaiValue})
 		</foreach>
 		ON DUPLICATE KEY UPDATE
 		pm10_value = VALUES(pm10_value),
@@ -58,6 +52,36 @@
 		VALUES(pm25_value),
 		khai_value = VALUES(khai_value)
 	</insert>
+	<!-- pm10 평균 -->
+	<select id="selectPm10Trend"
+		resultType="com.tech.hs.dto.Pm10TrendRow">
+		SELECT
+		DATE_FORMAT(a.data_time, '%Y-%m-%d %H:00') AS
+		dataTime,
+		ROUND(AVG(CAST(NULLIF(a.pm10_value, '-') AS DECIMAL(10,2))),
+		0) AS pm10Avg
+		FROM AIR_QUALITY a
+		WHERE a.sido_name = #{sido}
+		AND
+		a.data_time >= DATE_SUB(NOW(), INTERVAL #{hours} HOUR)
+		GROUP BY
+		DATE_FORMAT(a.data_time, '%Y-%m-%d %H:00')
+		ORDER BY dataTime ASC
+	</select>
+
+	<!-- pm25 평균 -->
+	<select id="selectPm25Trend"
+		resultType="com.tech.hs.dto.Pm25TrendRow">
+		SELECT
+		DATE_FORMAT(a.data_time, '%Y-%m-%d %H:00') AS dataTime,
+		ROUND(AVG(CAST(NULLIF(a.pm25_value, '-') AS DECIMAL(10,2))), 0) AS pm25Avg
+		FROM AIR_QUALITY a
+		WHERE a.sido_name = #{sido}
+		AND a.data_time >= DATE_SUB(NOW(), INTERVAL #{hours} HOUR)
+		GROUP BY DATE_FORMAT(a.data_time, '%Y-%m-%d %H:00')
+		ORDER BY dataTime ASC
+	</select>
+
 
 
 </mapper>
