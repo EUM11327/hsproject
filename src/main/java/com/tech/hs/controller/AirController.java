@@ -1,9 +1,13 @@
 package com.tech.hs.controller;
 
+import java.util.List;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import com.tech.hs.dto.AirRealtimeItem;
 import com.tech.hs.service.AirService;
 
 @Controller
@@ -23,4 +27,9 @@ public class AirController {
 		}
 		return "ok";
 	}
+	
+	@GetMapping("/realtime")
+    public List<AirRealtimeItem> getRealtime(@RequestParam String sido) throws Exception {
+        return airService.getSidoRealtime(sido);
+    }
 }

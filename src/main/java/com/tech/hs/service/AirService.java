@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tech.hs.dao.AirDao;
 import com.tech.hs.dto.AirDto;
+import com.tech.hs.dto.AirRealtimeItem;
 import com.tech.hs.dto.Pm10TrendRow;
 
 import lombok.RequiredArgsConstructor;
@@ -29,11 +30,63 @@ public class AirService {
 	private final AirDao airDao;
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
+	// 시도 실시간 목록
 	private static final String API_BASE = "https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty";
 
+	// 측정소 실시간 엔드포인트 추가
+	private static final String API_STATION_BASE = "https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty";
+
+	// 서비스키
 	private static final String SERVICE_KEY = "5a9f2ede48b1ba5dede90f126eae8a9469568790595cd42b880b61c80480eddd";
 
 	private static final DateTimeFormatter API_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+	public String getRealtimeByStation(String stationName) {
+		URI uri = UriComponentsBuilder.fromHttpUrl(API_STATION_BASE).queryParam("serviceKey", SERVICE_KEY)
+				.queryParam("returnType", "json").queryParam("dataTerm", "DAILY").queryParam("ver", "1.3")
+				.queryParam("pageNo", 1).queryParam("numOfRows", 1).queryParam("stationName", stationName).build()
+				.encode(StandardCharsets.UTF_8).toUri();
+
+		RestTemplate rt = new RestTemplate();
+		return rt.getForObject(uri, String.class);
+	}
+	
+	@Transactional(readOnly = true)
+	public List<AirRealtimeItem> getSidoRealtime(String sido) throws Exception {
+	    URI url = UriComponentsBuilder.fromHttpUrl(API_BASE)
+	            .queryParam("serviceKey", SERVICE_KEY)
+	            .queryParam("returnType", "json")
+	            .queryParam("numOfRows", 100)
+	            .queryParam("pageNo", 1)
+	            .queryParam("ver", "1.0")
+	            .queryParam("sidoName", sido)
+	            .build()
+	            .encode(StandardCharsets.UTF_8)
+	            .toUri();
+
+	    RestTemplate restTemplate = new RestTemplate();
+	    String jsonResponse = restTemplate.getForObject(url, String.class);
+
+	    List<AirRealtimeItem> list = new ArrayList<>();
+	    if (jsonResponse == null || jsonResponse.isBlank()) return list;
+
+	    JsonNode root = objectMapper.readTree(jsonResponse);
+	    JsonNode items = root.path("response").path("body").path("items");
+	    if (!items.isArray()) return list;
+
+	    for (JsonNode item : items) {
+	        AirRealtimeItem dto = new AirRealtimeItem();
+	        dto.setStationName(item.path("stationName").asText(null));
+	        dto.setDataTime(item.path("dataTime").asText(null));
+	        dto.setPm10Value(item.path("pm10Value").asText(null));
+	        dto.setPm10Grade(item.path("pm10Grade").asText(null));
+	        dto.setPm25Value(item.path("pm25Value").asText(null));
+	        dto.setPm25Grade(item.path("pm25Grade").asText(null));
+	        list.add(dto);
+	    }
+	    return list;
+	}
+
 
 	@Transactional
 	public void fetchAndSaveAirQuality(String sido) throws Exception {

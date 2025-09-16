@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tech.hs.dao.AirStationDao">
+
+	<resultMap id="AirStationMap"
+		type="com.tech.hs.dto.AirStationDto">
+		<id property="stationId" column="station_id" />
+		<result property="stationName" column="station_name" />
+		<result property="addr" column="addr" />
+		<result property="mangName" column="mang_name" />
+		<result property="lat" column="lat" />
+		<result property="lng" column="lng" />
+		<result property="startedYear" column="started_year" />
+		<result property="itemsText" column="items_text" />
+	</resultMap>
+
+	<!-- 단건 조회 (이름) -->
+	<select id="findByStationName" parameterType="string"
+		resultMap="AirStationMap">
+		SELECT station_id, station_name, addr, mang_name, lat, lng, started_year,
+		items_text
+		FROM AIR_STATION
+		WHERE station_name = #{stationName}
+		LIMIT 1
+	</select>
+
+	<!-- upsert -->
+	<insert id="upsert"
+		parameterType="com.tech.hs.dto.AirStationDto">
+		INSERT INTO AIR_STATION(
+		station_name, addr, mang_name,
+		lat, lng, started_year, items_text
+		) VALUES (
+		#{stationName}, #{addr},
+		#{mangName}, #{lat}, #{lng}, #{startedYear}, #{itemsText}
+		)
+		ON DUPLICATE
+		KEY UPDATE
+		addr=#{addr},
+		mang_name=#{mangName},
+		lat=#{lat},
+		lng=#{lng},
+		started_year=#{startedYear},
+		items_text=#{itemsText}
+	</insert>
+
+	<!-- 단건 조회 -->
+	<select id="findByName" parameterType="string"
+		resultMap="AirStationMap">
+		SELECT station_id, station_name, addr, mang_name,
+		lat, lng,
+		started_year, items_text
+		FROM air_station
+		WHERE station_name = #{name}
+	</select>
+
+	<!-- 전체 -->
+	<select id="findAll" resultMap="AirStationMap">
+		SELECT station_id, station_name,
+		addr, mang_name,
+		lat, lng, started_year, items_text
+		FROM air_station
+	</select>
+
+</mapper>

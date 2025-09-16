@@ -5,15 +5,22 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>미세먼지 지표 선택</title>
+<title>미세먼지 지도(PM10)</title>
+
+<!-- Leaflet CSS/JS  -->
+<link rel="stylesheet"
+	href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <style>
+/* ===== 공통/네비/상태바 스타일 ===== */
 body {
 	font-family: Arial, sans-serif;
-	padding: 24px;
+	margin: 0;
 }
 
 h2 {
-	margin-top: 32px;
+	margin: 16px 24px 8px;
 }
 
 .links {
@@ -45,6 +52,7 @@ h2 {
 	background: #111;
 	color: #fff;
 	font-size: 14px;
+	z-index: 1001;
 }
 
 #statusBar .dot {
@@ -64,7 +72,6 @@ h2 {
 	background: #ff6384;
 }
 
-/* 네비게이션 */
 .navbar {
 	background: #132c6f;
 }
@@ -90,7 +97,7 @@ h2 {
 }
 
 .navbar ul li:hover>a {
-	background: #aaa;
+	background: #304b9a;
 }
 
 .navbar ul li ul {
@@ -112,51 +119,69 @@ h2 {
 }
 
 .navbar ul li ul li a:hover {
-	background: #aaa;
+	background: #304b9a;
 }
 
 .navbar ul li:hover ul {
 	display: block;
 }
 
-/* footer */
-.footer {
-	background: #132c6f;
-	color: #ddd;
-	text-align: center;
-	padding: 10px 10px;
-	font-size: 14px;
+/* ===== 지도/툴바 스타일 ===== */
+.toolbar {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	padding: 10px 12px;
+	border-bottom: 1px solid #eee;
+	position: sticky;
+	top: 0;
+	background: #fff;
+	z-index: 999;
 }
 
-.footer a {
-	color: #ddd;
-	text-decoration: none;
-	margin: 0 5px;
-	transition: color 0.3s;
+.toolbar strong {
+	margin-right: 8px;
 }
 
-.footer a:hover {
-	color: #fff;
+#map {
+	width: 100%;
+	height: calc(100vh - 140px);
+}
+.legend {
+	background: white;
+	padding: 8px 10px;
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+	line-height: 1.4;
+	font-size: 12px;
+}
+
+.legend i {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	margin-right: 6px;
+	vertical-align: -2px;
+	border-radius: 2px;
 }
 </style>
 </head>
 <body>
-	<h2>미세먼지 지표 선택</h2>
-	<h1></h1>
 
+	<h2>미세먼지 지도 & 지표 선택</h2>
+
+	<!-- 네비게이션 -->
 	<div class="navbar">
 		<ul>
 			<li><a href="#">미세먼지 농도(pm10)▼</a>
 				<ul>
 					<li><a class="metric-link" data-metric="PM10" data-sido="서울"
 						href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='서울'/></c:url>">서울</a></li>
-
 					<li><a class="metric-link" data-metric="PM10" data-sido="경기"
 						href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='경기'/></c:url>">경기</a></li>
-
 					<li><a class="metric-link" data-metric="PM10" data-sido="대전"
 						href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='대전'/></c:url>">대전</a></li>
-
 					<li><a class="metric-link" data-metric="PM10" data-sido="부산"
 						href="<c:url value='/hs/service/trendchart/pm10'><c:param name='sido' value='부산'/></c:url>">부산</a></li>
 				</ul></li>
@@ -165,43 +190,136 @@ h2 {
 				<ul>
 					<li><a class="metric-link" data-metric="PM25" data-sido="서울"
 						href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='서울'/></c:url>">서울</a></li>
-
 					<li><a class="metric-link" data-metric="PM25" data-sido="경기"
 						href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='경기'/></c:url>">경기</a></li>
-
-
 					<li><a class="metric-link" data-metric="PM25" data-sido="대전"
 						href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='대전'/></c:url>">대전</a></li>
-
-
 					<li><a class="metric-link" data-metric="PM25" data-sido="부산"
 						href="<c:url value='/hs/service/trendchart/pm25'><c:param name='sido' value='부산'/></c:url>">부산</a></li>
 				</ul></li>
 		</ul>
 	</div>
 
+	<!-- 지도 상단 툴바 -->
+	<div class="toolbar">
+		<strong>PM10 지도</strong> <select id="sido">
+			<option>서울</option>
+			<option>경기</option>
+			<option>대전</option>
+			<option>부산</option>
+		</select>
+		<button id="reloadBtn">조회</button>
+		<span id="info" style="margin-left: auto; color: #666;"></span>
+	</div>
+
+	<!-- 지도 -->
+	<div id="map"></div>
+
+	<!-- 하단 상태바 -->
 	<div id="statusBar">선택: 없음</div>
 
 	<script>
-  const statusBar = document.getElementById('statusBar');
+// ===== 네비 hover 상태바 =====
+const statusBar = document.getElementById('statusBar');
+function setStatus(metric, sido) {
+  const dotClass = metric === 'PM10' ? 'pm10' : 'pm25';
+  statusBar.innerHTML = '선택:<span class="dot ' + dotClass + '"></span>' + metric + ' · ' + sido;
+}
+document.querySelectorAll('.metric-link').forEach(function(a){
+  a.addEventListener('mouseenter', function(){ setStatus(a.dataset.metric, a.dataset.sido); });
+  a.addEventListener('focus', function(){ setStatus(a.dataset.metric, a.dataset.sido); });
+  a.addEventListener('click', function(){ setStatus(a.dataset.metric, a.dataset.sido); });
+});
 
-  function setStatus(metric, sido) {
-    const dotClass = metric === 'PM10' ? 'pm10' : 'pm25';
-    statusBar.innerHTML = `선택:<span class="dot ${dotClass}"></span>${metric} · ${sido}`;
+// ===== 지도 초기화/렌더 =====
+const map = L.map('map').setView([37.5665, 126.9780], 10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'&copy; OpenStreetMap' }).addTo(map);
+
+const layerGroup = L.layerGroup().addTo(map);
+
+function colorByPM10(v){
+  if (v == null || isNaN(v)) return '#9e9e9e';
+  const n = Number(v);
+  if (n <= 30) return '#2e7d32';
+  if (n <= 80) return '#1976d2';
+  if (n <= 150) return '#ef6c00';
+  return '#d32f2f';
+}
+function circleStyle(v){
+  return { radius: 10, fillColor: colorByPM10(v), color: '#333', weight: 1, opacity: 0.7, fillOpacity: 0.8 };
+}
+
+function renderMarkers(items){
+  layerGroup.clearLayers();
+  const points = [];
+  for (var i=0; i<items.length; i++){
+    var it = items[i];
+    var lat = (it.lat ?? it.dmX);
+    var lng = (it.lng ?? it.dmY);
+    var pm10 = (it.pm10Value ?? it.pm10 ?? null);
+    if (lat == null || lng == null) continue;
+
+    var marker = L.circleMarker([lat, lng], circleStyle(pm10));
+    var name = (it.stationName ?? it.name ?? '-');
+    var time = (it.dataTime ?? '-');
+    var grade = (it.pm10Grade ?? it.grade ?? '-');
+
+    var html =
+      '<div style="min-width:180px">' +
+        '<div><strong>' + name + '</strong></div>' +
+        '<div>PM10: <b>' + (pm10 ?? 'NA') + '</b></div>' +
+        '<div>등급: ' + grade + '</div>' +
+        '<div>시각: ' + time + '</div>' +
+      '</div>';
+
+    marker.bindPopup(html);
+    marker.addTo(layerGroup);
+    points.push([lat, lng]);
   }
+  if (points.length){
+    const bounds = L.latLngBounds(points);
+    map.fitBounds(bounds.pad(0.2));
+  }
+  document.getElementById('info').textContent = '표시된 측정소: ' + items.length + '개';
+}
 
-  document.querySelectorAll('.metric-link').forEach(a => {
-    a.addEventListener('mouseenter', () => setStatus(a.dataset.metric, a.dataset.sido));
-    a.addEventListener('focus', () => setStatus(a.dataset.metric, a.dataset.sido));
-  });
+async function loadRealtime(){
+  const sido = document.getElementById('sido').value;
+  document.getElementById('info').textContent = '불러오는 중...';
+  try {
+    const res = await fetch('/hs/air/realtime?sido=' + encodeURIComponent(sido) + '&metric=PM10');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    renderMarkers(data);
+  } catch (e){
+    console.error(e);
+    document.getElementById('info').textContent = '로드 실패';
+    layerGroup.clearLayers();
+  }
+}
 
-  document.querySelectorAll('.metric-link').forEach(a => {
-    a.addEventListener('click', (e) => {
-      setStatus(a.dataset.metric, a.dataset.sido);
-      // e.preventDefault();
-      // setTimeout(() => window.location.href = a.href, 80);
-    });
-  });
+document.getElementById('reloadBtn').addEventListener('click', loadRealtime);
+window.addEventListener('load', loadRealtime);
+
+// 범례
+const legend = L.control({position:'bottomright'});
+legend.onAdd = function(){
+  const div = L.DomUtil.create('div','legend');
+  const ranges = [
+    {c:'#2e7d32', t:'좋음 (≤30)'},
+    {c:'#1976d2', t:'보통 (31~80)'},
+    {c:'#ef6c00', t:'나쁨 (81~150)'},
+    {c:'#d32f2f', t:'매우나쁨 (151+)'}
+  ];
+  var html = '<b>PM10</b><br/>';
+  for (var i=0; i<ranges.length; i++){
+    var r = ranges[i];
+    html += '<div><i style="background:' + r.c + '"></i>' + r.t + '</div>';
+  }
+  div.innerHTML = html;
+  return div;
+};
+legend.addTo(map);
 </script>
 
 </body>
